@@ -1,0 +1,556 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Kiểm Tra Địa Thống Kê - Khoa Địa Chất</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+    <!-- Google Fonts -->
+    <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@300;400;500;700&display=swap" rel="stylesheet">
+    <style>
+        body { font-family: 'Roboto', sans-serif; background-color: #f3f4f6; }
+        
+        /* Màu sắc thương hiệu */
+        :root {
+            --hcmus-blue: #004c8c;
+            --geo-orange: #d97706; 
+        }
+
+        .header-gradient { background: linear-gradient(to right, #ffffff, #e6f0fa); }
+        .text-hcmus { color: var(--hcmus-blue); }
+        .bg-hcmus { background-color: var(--hcmus-blue); }
+        
+        /* Drag and Drop Styles */
+        .draggable-item {
+            cursor: grab;
+            transition: all 0.2s;
+            touch-action: none; /* Quan trọng cho mobile */
+        }
+        .draggable-item:active { cursor: grabbing; transform: scale(1.05); }
+        .draggable-item.dragging { opacity: 0.5; }
+        
+        .drop-zone {
+            display: inline-block;
+            min-width: 120px;
+            min-height: 30px;
+            border-bottom: 2px dashed var(--hcmus-blue);
+            background-color: #f0f9ff;
+            vertical-align: middle;
+            margin: 0 5px;
+            text-align: center;
+            color: var(--hcmus-blue);
+            font-weight: bold;
+            padding: 2px 8px;
+        }
+        .drop-zone.over { background-color: #bfdbfe; border-color: #2563eb; }
+
+        /* Custom Scrollbar */
+        ::-webkit-scrollbar { width: 8px; }
+        ::-webkit-scrollbar-track { background: #f1f1f1; }
+        ::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 4px; }
+        ::-webkit-scrollbar-thumb:hover { background: #94a3b8; }
+
+        /* Loading Overlay */
+        #loadingOverlay { background: rgba(0, 0, 0, 0.5); z-index: 9999; }
+    </style>
+</head>
+<body class="min-h-screen flex flex-col">
+
+    <!-- Loading UI -->
+    <div id="loadingOverlay" class="fixed inset-0 hidden flex-col items-center justify-center">
+        <div class="bg-white p-6 rounded-lg shadow-xl flex flex-col items-center animate-bounce-in">
+            <div class="animate-spin rounded-full h-12 w-12 border-4 border-blue-200 border-t-blue-800 mb-4"></div>
+            <p class="text-blue-900 font-bold text-lg">Đang gửi kết quả về hệ thống...</p>
+            <p class="text-gray-500 text-sm mt-2">Vui lòng không tắt trình duyệt</p>
+        </div>
+    </div>
+
+    <!-- Header -->
+    <header class="header-gradient shadow-md border-b-4 border-hcmus sticky top-0 z-50">
+        <div class="max-w-5xl mx-auto px-4 py-3">
+            <div class="flex items-center justify-between gap-4">
+                <div class="flex items-center gap-4">
+                    <img src="https://hcmus.edu.vn/wp-content/uploads/2023/04/Logo-chinh-e1681638380305.png" alt="Logo HCMUS" class="h-12 md:h-16 object-contain">
+                    <div class="hidden md:block w-px h-12 bg-gray-300"></div>
+                    <img src="https://geology.hcmus.edu.vn/wp-content/uploads/2023/11/Geology-50PNG-300x300.png" alt="Logo Geology" class="h-12 md:h-16 object-contain hidden md:block">
+                </div>
+                <div class="text-right">
+                    <h2 class="text-xs md:text-sm font-bold text-gray-500 uppercase tracking-wide">Khoa Địa Chất - HCMUS</h2>
+                    <h1 class="text-lg md:text-2xl font-bold text-hcmus">ĐỊA THỐNG KÊ ỨNG DỤNG</h1>
+                    <div class="flex items-center justify-end gap-2 text-xs font-medium text-orange-600">
+                        <i class="fas fa-clock"></i> <span id="timer">45:00</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </header>
+
+    <!-- Main Content -->
+    <main class="flex-grow max-w-5xl mx-auto w-full p-4 pb-12">
+        
+        <!-- Student Info Section -->
+        <div class="bg-white rounded-lg shadow-sm border border-blue-100 p-6 mb-6">
+            <h3 class="text-lg font-bold text-hcmus mb-4 border-b pb-2"><i class="fas fa-user-graduate mr-2"></i>Thông tin sinh viên</h3>
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-1">Họ và tên <span class="text-red-500">*</span></label>
+                    <input type="text" id="studentName" class="w-full p-2 border border-gray-300 rounded focus:ring-2 focus:ring-blue-500 outline-none" placeholder="Nhập họ tên đầy đủ">
+                </div>
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-1">Mã số sinh viên <span class="text-red-500">*</span></label>
+                    <input type="text" id="studentId" class="w-full p-2 border border-gray-300 rounded focus:ring-2 focus:ring-blue-500 outline-none" placeholder="Ví dụ: 20160001">
+                </div>
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-1">Lớp học phần</label>
+                    <select id="classId" class="w-full p-2 border border-gray-300 rounded focus:ring-2 focus:ring-blue-500 outline-none">
+                        <option value="GEO_STAT_01">Địa thống kê - Nhóm 1</option>
+                        <option value="GEO_STAT_02">Địa thống kê - Nhóm 2</option>
+                    </select>
+                </div>
+            </div>
+        </div>
+
+        <form id="quizForm" onsubmit="return false;">
+            
+            <!-- Phần 1: Trắc nghiệm -->
+            <div class="mb-8">
+                <div class="flex items-center gap-2 mb-4">
+                    <span class="bg-blue-600 text-white text-xs font-bold px-2 py-1 rounded">PHẦN 1</span>
+                    <h3 class="text-xl font-bold text-gray-800">Trắc nghiệm nhiều lựa chọn (12 câu)</h3>
+                </div>
+                <div id="mcqContainer" class="space-y-6">
+                    <!-- MCQ Items will be injected here -->
+                </div>
+            </div>
+
+            <!-- Phần 2: Đúng Sai -->
+            <div class="mb-8">
+                <div class="flex items-center gap-2 mb-4">
+                    <span class="bg-orange-600 text-white text-xs font-bold px-2 py-1 rounded">PHẦN 2</span>
+                    <h3 class="text-xl font-bold text-gray-800">Đúng / Sai (4 câu)</h3>
+                </div>
+                <div id="tfContainer" class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <!-- TF Items will be injected here -->
+                </div>
+            </div>
+
+            <!-- Phần 3: Kéo thả -->
+            <div class="mb-8">
+                <div class="flex items-center gap-2 mb-4">
+                    <span class="bg-purple-600 text-white text-xs font-bold px-2 py-1 rounded">PHẦN 3</span>
+                    <h3 class="text-xl font-bold text-gray-800">Điền khuyết (Kéo thả)</h3>
+                </div>
+                
+                <!-- Word Bank -->
+                <div class="bg-white p-4 rounded-lg shadow border border-purple-200 mb-4 sticky top-20 z-40">
+                    <p class="text-sm text-gray-500 mb-2 font-medium">Kéo các từ sau vào ô trống thích hợp:</p>
+                    <div id="wordBank" class="flex flex-wrap gap-2">
+                        <!-- Draggable words generated here -->
+                    </div>
+                </div>
+
+                <div id="dragDropContainer" class="space-y-4 bg-white p-6 rounded-lg shadow-sm">
+                    <!-- Sentences generated here -->
+                </div>
+            </div>
+
+            <!-- Phần 4: Trả lời ngắn -->
+            <div class="mb-8">
+                <div class="flex items-center gap-2 mb-4">
+                    <span class="bg-green-600 text-white text-xs font-bold px-2 py-1 rounded">PHẦN 4</span>
+                    <h3 class="text-xl font-bold text-gray-800">Trả lời ngắn (5 câu)</h3>
+                </div>
+                <div id="shortAnswerContainer" class="space-y-6">
+                    <!-- Short Answer items generated here -->
+                </div>
+            </div>
+
+            <!-- Submit Actions -->
+            <div class="fixed bottom-0 left-0 right-0 bg-white border-t p-4 shadow-lg z-50">
+                <div class="max-w-5xl mx-auto flex justify-between items-center">
+                    <div class="text-sm text-gray-600 hidden md:block">
+                        Hoàn thành: <span id="progressCount" class="font-bold text-blue-600">0</span>/26 câu
+                    </div>
+                    <div class="flex gap-3 w-full md:w-auto">
+                        <button onclick="resetQuiz()" class="px-6 py-2 border border-gray-300 rounded text-gray-600 hover:bg-gray-50 font-medium transition">
+                            Làm lại
+                        </button>
+                        <button onclick="submitQuiz()" class="flex-1 md:flex-none px-8 py-2 bg-hcmus text-white rounded font-bold hover:bg-blue-800 shadow-md transition transform hover:-translate-y-0.5">
+                            <i class="fas fa-paper-plane mr-2"></i> Gửi bài thi
+                        </button>
+                    </div>
+                </div>
+            </div>
+            <div class="h-16"></div> <!-- Spacer for fixed footer -->
+
+        </form>
+    </main>
+
+    <script>
+        // CẤU HÌNH APP SCRIPT URL CỦA BẠN Ở ĐÂY
+        const GOOGLE_SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbwKeTMSqe5fDYbjPS5JkhAaiHkwWYGDoOkCmvQXxp5LkInboOgZt4S7lXh_40D7VEl8wg/exec'; 
+
+        // --- DỮ LIỆU CÂU HỎI (Được trích xuất từ file CSV & PDF Geostatistics) ---
+        const quizData = {
+            mcq: [
+                { id: "mc1", q: "ANN (Artificial Neural Network) được sử dụng trong địa thống kê chủ yếu để làm gì?", options: ["Dự báo độ rỗng/độ thấm cho giếng khoan", "Phân loại mẫu đá bằng mắt thường", "Tính toán trữ lượng dầu khí thủ công", "Vẽ bản đồ địa hình bề mặt"], correct: 0 },
+                { id: "mc2", q: "Covariance (Hiệp phương sai) trong địa thống kê dùng để đo lường điều gì?", options: ["Sự biến thiên độc lập của một biến", "Mức độ tương quan tuyến tính giữa hai biến ngẫu nhiên", "Giá trị trung bình của tập dữ liệu", "Sai số của phép đo"], correct: 1 },
+                { id: "mc3", q: "Trong biểu đồ Variogram, 'Range' (Khoảng biến thiên) có ý nghĩa gì?", options: ["Khoảng cách mà tại đó các mẫu không còn tương quan không gian", "Giá trị phương sai lớn nhất", "Khoảng cách giữa hai giếng khoan gần nhất", "Độ lỗi của phép nội suy"], correct: 0 },
+                { id: "mc4", q: "Biến ngẫu nhiên (Random Variable) trong địa thống kê khác với biến tất định như thế nào?", options: ["Có thể dự đoán chính xác 100%", "Luôn có phân phối chuẩn", "Có tính bất định và tuân theo luật phân phối xác suất", "Không phụ thuộc vào vị trí không gian"], correct: 2 },
+                { id: "mc5", q: "Hiệu ứng 'Nugget' (Hiệu ứng vỉa) trong Variogram thể hiện điều gì?", options: ["Sự liên tục hoàn hảo tại gốc tọa độ", "Sự biến thiên ngẫu nhiên hoặc sai số ở khoảng cách rất nhỏ", "Giá trị cực đại của Variogram", "Xu hướng của dữ liệu theo hướng Bắc-Nam"], correct: 1 },
+                { id: "mc6", q: "Phương pháp Kriging nào yêu cầu giá trị trung bình (mean) của tổng thể phải biết trước?", options: ["Ordinary Kriging", "Simple Kriging", "Indicator Kriging", "Universal Kriging"], correct: 1 },
+                { id: "mc7", q: "Giả thuyết 'Stationarity' (Tính dừng) bậc hai bao gồm điều kiện nào?", options: ["Kỳ vọng và Hiệp phương sai không phụ thuộc vào vị trí, chỉ phụ thuộc khoảng cách", "Dữ liệu phải tuân theo phân phối chuẩn", "Dữ liệu không được có nhiễu", "Variogram phải đi qua gốc tọa độ"], correct: 0 },
+                { id: "mc8", q: "Mục đích chính của việc 'Cross-Validation' (Kiểm chứng chéo) là gì?", options: ["Tăng số lượng mẫu dữ liệu", "Kiểm tra độ chính xác và độ tin cậy của mô hình ước lượng", "Loại bỏ các giá trị ngoại lai", "Tính toán trữ lượng cấp 1"], correct: 1 },
+                { id: "mc9", q: "Khi Variogram có tính dị hướng (Anisotropy), điều này có nghĩa là gì?", options: ["Sự biến thiên giống nhau ở mọi hướng", "Range (khoảng biến thiên) thay đổi tùy theo phương vị", "Dữ liệu bị lỗi thu thập", "Không thể thực hiện Kriging"], correct: 1 },
+                { id: "mc10", q: "Sill (Ngưỡng) trong mô hình Variogram lý tưởng thường tương đương với giá trị thống kê nào?", options: ["Trung bình mẫu (Mean)", "Phương sai mẫu (Variance)", "Độ lệch chuẩn (Standard Deviation)", "Trung vị (Median)"], correct: 1 },
+                { id: "mc11", q: "Đâu là đặc điểm quan trọng nhất của thuật toán Kriging (BLUE)?", options: ["Ước lượng tuyến tính, không chệch và phương sai tối thiểu", "Ước lượng phi tuyến tính nhanh nhất", "Không cần mô hình Variogram", "Luôn tạo ra bề mặt trơn nhẵn nhất"], correct: 0 },
+                { id: "mc12", q: "Trong địa thống kê, 'Support' (Gối tựa) đề cập đến:", options: ["Phần mềm hỗ trợ tính toán", "Kích thước, hình dạng và hướng của mẫu vật lý", "Sự hỗ trợ của chuyên gia địa chất", "Giá đỡ thiết bị đo"], correct: 1 }
+            ],
+            tf: [
+                { id: "tf1", q: "Kriging là một thuật toán nội suy chính xác (Exact Interpolator), nghĩa là tại vị trí đã có mẫu, giá trị ước lượng bằng chính giá trị mẫu.", correct: true },
+                { id: "tf2", q: "Trong mô hình cầu (Spherical Model), giá trị Variogram tiếp tục tăng vô hạn khi khoảng cách tăng.", correct: false },
+                { id: "tf3", q: "Nếu Nugget effect bằng 0, điều đó ám chỉ sự liên tục không gian rất cao ở khoảng cách ngắn.", correct: true },
+                { id: "tf4", q: "Ordinary Kriging giả định rằng giá trị trung bình của trường ngẫu nhiên là hằng số nhưng chưa biết.", correct: true }
+            ],
+            dragDrop: {
+                words: ["Sill", "Lag", "Kriging", "Range", "Nugget"],
+                sentences: [
+                    { id: "dd1", text: "Khoảng cách mà tại đó Variogram đạt đến giá trị ổn định được gọi là [].", answer: "Range" },
+                    { id: "dd2", text: "Giá trị phương sai tổng cộng mà Variogram tiệm cận được gọi là [].", answer: "Sill" },
+                    { id: "dd3", text: "Thuật toán ước lượng nội suy tối ưu nhất trong địa thống kê là [].", answer: "Kriging" },
+                    { id: "dd4", text: "Độ lệch tại gốc tọa độ (h=0) do sai số đo đạc hoặc biến đổi vi mô gọi là hiệu ứng [].", answer: "Nugget" },
+                    { id: "dd5", text: "Vector khoảng cách giữa hai điểm dữ liệu trong tính toán Variogram được gọi là [].", answer: "Lag" }
+                ]
+            },
+            shortAns: [
+                { id: "sa1", q: "Hãy định nghĩa ngắn gọn về 'Stationarity' (Tính dừng) trong địa thống kê." },
+                { id: "sa2", q: "Sự khác biệt cơ bản giữa Simple Kriging và Ordinary Kriging là gì?" },
+                { id: "sa3", q: "Tại sao cần phải thực hiện biến đổi dữ liệu (ví dụ: Log-normal) trước khi phân tích địa thống kê?" },
+                { id: "sa4", q: "Hiệu ứng màn chắn (Screen Effect) trong Kriging có ý nghĩa gì?" },
+                { id: "sa5", q: "Nêu một ứng dụng thực tế của Co-Kriging trong ngành dầu khí." }
+            ]
+        };
+
+        // --- RENDER FUNCTIONS ---
+        
+        function initQuiz() {
+            renderMCQ();
+            renderTF();
+            renderDragDrop();
+            renderShortAnswer();
+            startTimer();
+        }
+
+        function renderMCQ() {
+            const container = document.getElementById('mcqContainer');
+            quizData.mcq.forEach((item, index) => {
+                const div = document.createElement('div');
+                div.className = "bg-white p-5 rounded-lg shadow-sm border border-gray-100 hover:shadow-md transition";
+                div.innerHTML = `
+                    <p class="font-bold text-gray-800 mb-3"><span class="text-blue-600">Câu ${index + 1}:</span> ${item.q}</p>
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-3">
+                        ${item.options.map((opt, i) => `
+                            <label class="flex items-start p-3 border rounded cursor-pointer hover:bg-blue-50 transition">
+                                <input type="radio" name="${item.id}" value="${i}" class="mt-1 mr-3 text-blue-600 focus:ring-blue-500">
+                                <span class="text-sm text-gray-700">${opt}</span>
+                            </label>
+                        `).join('')}
+                    </div>
+                `;
+                container.appendChild(div);
+            });
+        }
+
+        function renderTF() {
+            const container = document.getElementById('tfContainer');
+            quizData.tf.forEach((item, index) => {
+                const div = document.createElement('div');
+                div.className = "bg-white p-5 rounded-lg shadow-sm border border-gray-100";
+                div.innerHTML = `
+                    <p class="font-bold text-gray-800 mb-3 text-sm"><span class="text-orange-600">Câu ${index + 1}:</span> ${item.q}</p>
+                    <div class="flex gap-6">
+                        <label class="flex items-center space-x-2 cursor-pointer">
+                            <input type="radio" name="${item.id}" value="true" class="text-green-600 focus:ring-green-500">
+                            <span class="font-bold text-green-700">Đúng</span>
+                        </label>
+                        <label class="flex items-center space-x-2 cursor-pointer">
+                            <input type="radio" name="${item.id}" value="false" class="text-red-600 focus:ring-red-500">
+                            <span class="font-bold text-red-700">Sai</span>
+                        </label>
+                    </div>
+                `;
+                container.appendChild(div);
+            });
+        }
+
+        function renderDragDrop() {
+            // Render Word Bank
+            const wordBank = document.getElementById('wordBank');
+            // Shuffle words
+            const shuffledWords = [...quizData.dragDrop.words].sort(() => Math.random() - 0.5);
+            
+            shuffledWords.forEach(word => {
+                const el = document.createElement('div');
+                el.className = 'draggable-item bg-purple-100 text-purple-800 px-4 py-2 rounded-full font-bold shadow-sm border border-purple-300 select-none';
+                el.draggable = true;
+                el.innerText = word;
+                el.id = 'word-' + word;
+                
+                // Desktop Drag Events
+                el.addEventListener('dragstart', dragStart);
+                el.addEventListener('dragend', dragEnd);
+                
+                // Mobile Touch Events
+                el.addEventListener('touchstart', touchStart, {passive: false});
+                el.addEventListener('touchmove', touchMove, {passive: false});
+                el.addEventListener('touchend', touchEnd);
+                
+                wordBank.appendChild(el);
+            });
+
+            // Render Sentences
+            const container = document.getElementById('dragDropContainer');
+            quizData.dragDrop.sentences.forEach((item, index) => {
+                const div = document.createElement('div');
+                div.className = "p-3 border-b border-gray-100 last:border-0";
+                // Replace [] with dropzone
+                const htmlText = item.text.replace('[]', `<span class="drop-zone" data-correct="${item.answer}" id="drop-${item.id}"></span>`);
+                div.innerHTML = `<span class="font-bold text-purple-600 mr-2">Câu ${index + 1}:</span> ${htmlText}`;
+                container.appendChild(div);
+            });
+
+            // Add Drop Events to Zones
+            document.querySelectorAll('.drop-zone').forEach(zone => {
+                zone.addEventListener('dragover', dragOver);
+                zone.addEventListener('dragenter', dragEnter);
+                zone.addEventListener('dragleave', dragLeave);
+                zone.addEventListener('drop', drop);
+            });
+        }
+
+        function renderShortAnswer() {
+            const container = document.getElementById('shortAnswerContainer');
+            quizData.shortAns.forEach((item, index) => {
+                const div = document.createElement('div');
+                div.className = "bg-white p-5 rounded-lg shadow-sm border border-gray-100";
+                div.innerHTML = `
+                    <p class="font-bold text-gray-800 mb-2"><span class="text-green-600">Câu ${index + 1}:</span> ${item.q}</p>
+                    <textarea id="${item.id}" rows="3" class="w-full p-3 border border-gray-300 rounded focus:ring-2 focus:ring-green-500 outline-none text-sm" placeholder="Nhập câu trả lời của bạn..."></textarea>
+                `;
+                container.appendChild(div);
+            });
+        }
+
+        // --- DRAG & DROP LOGIC ---
+        let draggedItem = null;
+        let touchItem = null;
+        let touchOffsetX = 0;
+        let touchOffsetY = 0;
+
+        function dragStart(e) {
+            draggedItem = this;
+            setTimeout(() => this.classList.add('dragging'), 0);
+        }
+        function dragEnd() {
+            this.classList.remove('dragging');
+            draggedItem = null;
+        }
+        function dragOver(e) { e.preventDefault(); }
+        function dragEnter(e) { e.preventDefault(); this.classList.add('over'); }
+        function dragLeave() { this.classList.remove('over'); }
+        
+        function drop(e) {
+            this.classList.remove('over');
+            if (draggedItem) {
+                // Nếu zone đã có item, trả item cũ về bank
+                if (this.innerText) {
+                    returnToBank(this.innerText);
+                }
+                this.innerText = draggedItem.innerText;
+                this.dataset.val = draggedItem.innerText;
+                draggedItem.style.display = 'none'; // Ẩn khỏi bank
+            }
+        }
+
+        // Mobile Touch Logic
+        function touchStart(e) {
+            e.preventDefault();
+            touchItem = this;
+            const touch = e.touches[0];
+            const rect = this.getBoundingClientRect();
+            touchOffsetX = touch.clientX - rect.left;
+            touchOffsetY = touch.clientY - rect.top;
+            
+            this.style.position = 'fixed';
+            this.style.left = rect.left + 'px';
+            this.style.top = rect.top + 'px';
+            this.style.zIndex = 1000;
+            this.style.opacity = 0.8;
+        }
+
+        function touchMove(e) {
+            e.preventDefault();
+            if (!touchItem) return;
+            const touch = e.touches[0];
+            touchItem.style.left = (touch.clientX - touchOffsetX) + 'px';
+            touchItem.style.top = (touch.clientY - touchOffsetY) + 'px';
+        }
+
+        function touchEnd(e) {
+            if (!touchItem) return;
+            touchItem.style.opacity = 1;
+            touchItem.style.zIndex = '';
+            
+            // Check drop
+            const changedTouch = e.changedTouches[0];
+            const elemBelow = document.elementFromPoint(changedTouch.clientX, changedTouch.clientY);
+            const dropZone = elemBelow ? elemBelow.closest('.drop-zone') : null;
+
+            if (dropZone) {
+                if (dropZone.innerText) returnToBank(dropZone.innerText);
+                dropZone.innerText = touchItem.innerText;
+                dropZone.dataset.val = touchItem.innerText;
+                touchItem.style.display = 'none';
+            }
+            
+            // Reset style
+            touchItem.style.position = '';
+            touchItem = null;
+        }
+
+        function returnToBank(text) {
+            const wordEl = document.getElementById('word-' + text);
+            if(wordEl) {
+                wordEl.style.display = 'inline-block';
+                wordEl.style.position = '';
+            }
+        }
+
+        // --- SUBMISSION LOGIC ---
+
+        async function submitQuiz() {
+            const name = document.getElementById('studentName').value.trim();
+            const mssv = document.getElementById('studentId').value.trim();
+            const group = document.getElementById('classId').value;
+            
+            if (!name || !mssv) {
+                alert("Vui lòng nhập đầy đủ Họ tên và MSSV!");
+                window.scrollTo(0,0);
+                return;
+            }
+
+            if (!confirm("Bạn có chắc chắn muốn nộp bài? Không thể sửa đổi sau khi nộp.")) return;
+
+            document.getElementById('loadingOverlay').style.display = 'flex';
+
+            // Calculate Score
+            let score = 0;
+            let totalScoreMax = 10; // Giả sử thang điểm 10
+            let results = []; // Mảng chứa kết quả chi tiết từng câu để gửi đi
+
+            // 1. MCQ (0.25đ/câu x 12 = 3đ)
+            quizData.mcq.forEach(q => {
+                const selected = document.querySelector(`input[name="${q.id}"]:checked`);
+                const val = selected ? parseInt(selected.value) : -1;
+                const isCorrect = val === q.correct;
+                if (isCorrect) score += 0.25;
+                results.push(isCorrect ? "Đ" : "S"); 
+            });
+
+            // 2. TF (0.25đ/câu x 4 = 1đ)
+            quizData.tf.forEach(q => {
+                const selected = document.querySelector(`input[name="${q.id}"]:checked`);
+                const val = selected ? (selected.value === 'true') : null;
+                const isCorrect = val === q.correct;
+                if (isCorrect) score += 0.25;
+                results.push(isCorrect ? "Đ" : "S");
+            });
+
+            // 3. DragDrop (0.4đ/câu x 5 = 2đ)
+            document.querySelectorAll('.drop-zone').forEach(zone => {
+                const userVal = zone.innerText.trim();
+                const correctVal = zone.dataset.correct;
+                const isCorrect = userVal === correctVal;
+                if (isCorrect) score += 0.4;
+                results.push(isCorrect ? "Đ" : "S");
+            });
+
+            // 4. Short Answer (Chấm tay sau - Gửi nội dung)
+            // Ghi nhận nội dung trả lời vào mảng kết quả
+            quizData.shortAns.forEach(q => {
+                const val = document.getElementById(q.id).value.trim();
+                results.push(val ? `"${val}"` : "Trống"); // Gửi nội dung text đi
+            });
+
+            // Format dữ liệu gửi đi khớp với App Script
+            // Script nhận: [Date, role, evaluator, groupName, week, ...scores]
+            // Map vào:
+            // role -> "Bài Kiểm Tra"
+            // evaluator -> Tên SV - MSSV
+            // groupName -> Lớp
+            // week -> "Điểm: " + score
+            // scores -> Mảng chi tiết [Đ, S, Đ, "Nội dung trả lời"...]
+            
+            const payload = {
+                role: "Bài Kiểm Tra GK",
+                evaluator: `${name} - ${mssv}`,
+                groupName: group,
+                week: `Điểm TN: ${score.toFixed(2)}`,
+                scores: results
+            };
+
+            try {
+                // Sử dụng no-cors để tránh lỗi CORS khi gọi trực tiếp từ browser client
+                await fetch(GOOGLE_SCRIPT_URL, {
+                    method: 'POST',
+                    mode: 'no-cors', 
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(payload)
+                });
+
+                // Vì no-cors không trả về response body, ta giả định thành công nếu không có lỗi mạng
+                document.getElementById('loadingOverlay').style.display = 'none';
+                alert(`Nộp bài thành công!\nĐiểm trắc nghiệm tạm tính: ${score.toFixed(2)}`);
+                // Khóa form
+                document.querySelectorAll('input, button, textarea, .draggable-item').forEach(el => el.disabled = true);
+                
+            } catch (error) {
+                document.getElementById('loadingOverlay').style.display = 'none';
+                console.error(error);
+                alert("Có lỗi kết nối. Vui lòng thử lại hoặc chụp màn hình kết quả.");
+            }
+        }
+
+        function resetQuiz() {
+            if(confirm("Làm lại sẽ xóa hết các lựa chọn hiện tại. Tiếp tục?")) {
+                document.getElementById('quizForm').reset();
+                document.querySelectorAll('.drop-zone').forEach(z => {
+                    if(z.innerText) returnToBank(z.innerText);
+                    z.innerText = '';
+                });
+                window.scrollTo(0,0);
+            }
+        }
+
+        function startTimer() {
+            let duration = 45 * 60; // 45 minutes
+            const display = document.getElementById('timer');
+            const timer = setInterval(() => {
+                const minutes = Math.floor(duration / 60);
+                const seconds = duration % 60;
+                display.textContent = `${minutes}:${seconds < 10 ? '0' : ''}${seconds}`;
+                if (--duration < 0) {
+                    clearInterval(timer);
+                    alert("Hết giờ làm bài!");
+                    submitQuiz();
+                }
+            }, 1000);
+        }
+
+        // Init
+        window.onload = initQuiz;
+
+    </script>
+</body>
+</html>
