@@ -108,6 +108,16 @@
                         <option value="GEO_STAT_02">Địa thống kê - Nhóm 2</option>
                     </select>
                 </div>
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-1 text-blue-800 font-bold">Chọn Đề Thi <span class="text-red-500">*</span></label>
+                    <select id="testSelect" onchange="changeTest()" class="w-full p-2 border-2 border-blue-300 rounded focus:ring-2 focus:ring-blue-500 outline-none font-bold text-blue-900">
+                        <option value="test1">Đề số 01</option>
+                        <option value="test2">Đề số 02</option>
+                        <option value="test3">Đề số 03</option>
+                        <option value="test4">Đề số 04</option>
+                        <option value="test5">Đề số 05</option>
+                    </select>
+                </div>
             </div>
         </div>
 
@@ -191,60 +201,238 @@
         // CẤU HÌNH APP SCRIPT URL CỦA BẠN Ở ĐÂY
         const GOOGLE_SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbwKeTMSqe5fDYbjPS5JkhAaiHkwWYGDoOkCmvQXxp5LkInboOgZt4S7lXh_40D7VEl8wg/exec'; 
 
-        // --- DỮ LIỆU CÂU HỎI (Được trích xuất từ file CSV & PDF Geostatistics) ---
-        const quizData = {
-            mcq: [
-                { id: "mc1", q: "ANN (Artificial Neural Network) được sử dụng trong địa thống kê chủ yếu để làm gì?", options: ["Dự báo độ rỗng/độ thấm cho giếng khoan", "Phân loại mẫu đá bằng mắt thường", "Tính toán trữ lượng dầu khí thủ công", "Vẽ bản đồ địa hình bề mặt"], correct: 0 },
-                { id: "mc2", q: "Covariance (Hiệp phương sai) trong địa thống kê dùng để đo lường điều gì?", options: ["Sự biến thiên độc lập của một biến", "Mức độ tương quan tuyến tính giữa hai biến ngẫu nhiên", "Giá trị trung bình của tập dữ liệu", "Sai số của phép đo"], correct: 1 },
-                { id: "mc3", q: "Trong biểu đồ Variogram, 'Range' (Khoảng biến thiên) có ý nghĩa gì?", options: ["Khoảng cách mà tại đó các mẫu không còn tương quan không gian", "Giá trị phương sai lớn nhất", "Khoảng cách giữa hai giếng khoan gần nhất", "Độ lỗi của phép nội suy"], correct: 0 },
-                { id: "mc4", q: "Biến ngẫu nhiên (Random Variable) trong địa thống kê khác với biến tất định như thế nào?", options: ["Có thể dự đoán chính xác 100%", "Luôn có phân phối chuẩn", "Có tính bất định và tuân theo luật phân phối xác suất", "Không phụ thuộc vào vị trí không gian"], correct: 2 },
-                { id: "mc5", q: "Hiệu ứng 'Nugget' (Hiệu ứng vỉa) trong Variogram thể hiện điều gì?", options: ["Sự liên tục hoàn hảo tại gốc tọa độ", "Sự biến thiên ngẫu nhiên hoặc sai số ở khoảng cách rất nhỏ", "Giá trị cực đại của Variogram", "Xu hướng của dữ liệu theo hướng Bắc-Nam"], correct: 1 },
-                { id: "mc6", q: "Phương pháp Kriging nào yêu cầu giá trị trung bình (mean) của tổng thể phải biết trước?", options: ["Ordinary Kriging", "Simple Kriging", "Indicator Kriging", "Universal Kriging"], correct: 1 },
-                { id: "mc7", q: "Giả thuyết 'Stationarity' (Tính dừng) bậc hai bao gồm điều kiện nào?", options: ["Kỳ vọng và Hiệp phương sai không phụ thuộc vào vị trí, chỉ phụ thuộc khoảng cách", "Dữ liệu phải tuân theo phân phối chuẩn", "Dữ liệu không được có nhiễu", "Variogram phải đi qua gốc tọa độ"], correct: 0 },
-                { id: "mc8", q: "Mục đích chính của việc 'Cross-Validation' (Kiểm chứng chéo) là gì?", options: ["Tăng số lượng mẫu dữ liệu", "Kiểm tra độ chính xác và độ tin cậy của mô hình ước lượng", "Loại bỏ các giá trị ngoại lai", "Tính toán trữ lượng cấp 1"], correct: 1 },
-                { id: "mc9", q: "Khi Variogram có tính dị hướng (Anisotropy), điều này có nghĩa là gì?", options: ["Sự biến thiên giống nhau ở mọi hướng", "Range (khoảng biến thiên) thay đổi tùy theo phương vị", "Dữ liệu bị lỗi thu thập", "Không thể thực hiện Kriging"], correct: 1 },
-                { id: "mc10", q: "Sill (Ngưỡng) trong mô hình Variogram lý tưởng thường tương đương với giá trị thống kê nào?", options: ["Trung bình mẫu (Mean)", "Phương sai mẫu (Variance)", "Độ lệch chuẩn (Standard Deviation)", "Trung vị (Median)"], correct: 1 },
-                { id: "mc11", q: "Đâu là đặc điểm quan trọng nhất của thuật toán Kriging (BLUE)?", options: ["Ước lượng tuyến tính, không chệch và phương sai tối thiểu", "Ước lượng phi tuyến tính nhanh nhất", "Không cần mô hình Variogram", "Luôn tạo ra bề mặt trơn nhẵn nhất"], correct: 0 },
-                { id: "mc12", q: "Trong địa thống kê, 'Support' (Gối tựa) đề cập đến:", options: ["Phần mềm hỗ trợ tính toán", "Kích thước, hình dạng và hướng của mẫu vật lý", "Sự hỗ trợ của chuyên gia địa chất", "Giá đỡ thiết bị đo"], correct: 1 }
-            ],
-            tf: [
-                { id: "tf1", q: "Kriging là một thuật toán nội suy chính xác (Exact Interpolator), nghĩa là tại vị trí đã có mẫu, giá trị ước lượng bằng chính giá trị mẫu.", correct: true },
-                { id: "tf2", q: "Trong mô hình cầu (Spherical Model), giá trị Variogram tiếp tục tăng vô hạn khi khoảng cách tăng.", correct: false },
-                { id: "tf3", q: "Nếu Nugget effect bằng 0, điều đó ám chỉ sự liên tục không gian rất cao ở khoảng cách ngắn.", correct: true },
-                { id: "tf4", q: "Ordinary Kriging giả định rằng giá trị trung bình của trường ngẫu nhiên là hằng số nhưng chưa biết.", correct: true }
-            ],
-            dragDrop: {
-                words: ["Sill", "Lag", "Kriging", "Range", "Nugget"],
-                sentences: [
-                    { id: "dd1", text: "Khoảng cách mà tại đó Variogram đạt đến giá trị ổn định được gọi là [].", answer: "Range" },
-                    { id: "dd2", text: "Giá trị phương sai tổng cộng mà Variogram tiệm cận được gọi là [].", answer: "Sill" },
-                    { id: "dd3", text: "Thuật toán ước lượng nội suy tối ưu nhất trong địa thống kê là [].", answer: "Kriging" },
-                    { id: "dd4", text: "Độ lệch tại gốc tọa độ (h=0) do sai số đo đạc hoặc biến đổi vi mô gọi là hiệu ứng [].", answer: "Nugget" },
-                    { id: "dd5", text: "Vector khoảng cách giữa hai điểm dữ liệu trong tính toán Variogram được gọi là [].", answer: "Lag" }
+        // --- CƠ SỞ DỮ LIỆU CÂU HỎI (ĐA ĐỀ) ---
+        const allTests = {
+            "test1": {
+                mcq: [
+                    { id: "mc1", q: "ANN (Artificial Neural Network) được sử dụng trong địa thống kê chủ yếu để làm gì?", options: ["Dự báo độ rỗng/độ thấm cho giếng khoan", "Phân loại mẫu đá bằng mắt thường", "Tính toán trữ lượng dầu khí thủ công", "Vẽ bản đồ địa hình bề mặt"], correct: 0 },
+                    { id: "mc2", q: "Covariance (Hiệp phương sai) trong địa thống kê dùng để đo lường điều gì?", options: ["Sự biến thiên độc lập của một biến", "Mức độ tương quan tuyến tính giữa hai biến ngẫu nhiên", "Giá trị trung bình của tập dữ liệu", "Sai số của phép đo"], correct: 1 },
+                    { id: "mc3", q: "Trong biểu đồ Variogram, 'Range' (Khoảng biến thiên) có ý nghĩa gì?", options: ["Khoảng cách mà tại đó các mẫu không còn tương quan không gian", "Giá trị phương sai lớn nhất", "Khoảng cách giữa hai giếng khoan gần nhất", "Độ lỗi của phép nội suy"], correct: 0 },
+                    { id: "mc4", q: "Biến ngẫu nhiên (Random Variable) trong địa thống kê khác với biến tất định như thế nào?", options: ["Có thể dự đoán chính xác 100%", "Luôn có phân phối chuẩn", "Có tính bất định và tuân theo luật phân phối xác suất", "Không phụ thuộc vào vị trí không gian"], correct: 2 },
+                    { id: "mc5", q: "Hiệu ứng 'Nugget' (Hiệu ứng vỉa) trong Variogram thể hiện điều gì?", options: ["Sự liên tục hoàn hảo tại gốc tọa độ", "Sự biến thiên ngẫu nhiên hoặc sai số ở khoảng cách rất nhỏ", "Giá trị cực đại của Variogram", "Xu hướng của dữ liệu theo hướng Bắc-Nam"], correct: 1 },
+                    { id: "mc6", q: "Phương pháp Kriging nào yêu cầu giá trị trung bình (mean) của tổng thể phải biết trước?", options: ["Ordinary Kriging", "Simple Kriging", "Indicator Kriging", "Universal Kriging"], correct: 1 },
+                    { id: "mc7", q: "Giả thuyết 'Stationarity' (Tính dừng) bậc hai bao gồm điều kiện nào?", options: ["Kỳ vọng và Hiệp phương sai không phụ thuộc vào vị trí, chỉ phụ thuộc khoảng cách", "Dữ liệu phải tuân theo phân phối chuẩn", "Dữ liệu không được có nhiễu", "Variogram phải đi qua gốc tọa độ"], correct: 0 },
+                    { id: "mc8", q: "Mục đích chính của việc 'Cross-Validation' (Kiểm chứng chéo) là gì?", options: ["Tăng số lượng mẫu dữ liệu", "Kiểm tra độ chính xác và độ tin cậy của mô hình ước lượng", "Loại bỏ các giá trị ngoại lai", "Tính toán trữ lượng cấp 1"], correct: 1 },
+                    { id: "mc9", q: "Khi Variogram có tính dị hướng (Anisotropy), điều này có nghĩa là gì?", options: ["Sự biến thiên giống nhau ở mọi hướng", "Range (khoảng biến thiên) thay đổi tùy theo phương vị", "Dữ liệu bị lỗi thu thập", "Không thể thực hiện Kriging"], correct: 1 },
+                    { id: "mc10", q: "Sill (Ngưỡng) trong mô hình Variogram lý tưởng thường tương đương với giá trị thống kê nào?", options: ["Trung bình mẫu (Mean)", "Phương sai mẫu (Variance)", "Độ lệch chuẩn (Standard Deviation)", "Trung vị (Median)"], correct: 1 },
+                    { id: "mc11", q: "Đâu là đặc điểm quan trọng nhất của thuật toán Kriging (BLUE)?", options: ["Ước lượng tuyến tính, không chệch và phương sai tối thiểu", "Ước lượng phi tuyến tính nhanh nhất", "Không cần mô hình Variogram", "Luôn tạo ra bề mặt trơn nhẵn nhất"], correct: 0 },
+                    { id: "mc12", q: "Trong địa thống kê, 'Support' (Gối tựa) đề cập đến:", options: ["Phần mềm hỗ trợ tính toán", "Kích thước, hình dạng và hướng của mẫu vật lý", "Sự hỗ trợ của chuyên gia địa chất", "Giá đỡ thiết bị đo"], correct: 1 }
+                ],
+                tf: [
+                    { id: "tf1", q: "Kriging là một thuật toán nội suy chính xác (Exact Interpolator), nghĩa là tại vị trí đã có mẫu, giá trị ước lượng bằng chính giá trị mẫu.", correct: true },
+                    { id: "tf2", q: "Trong mô hình cầu (Spherical Model), giá trị Variogram tiếp tục tăng vô hạn khi khoảng cách tăng.", correct: false },
+                    { id: "tf3", q: "Nếu Nugget effect bằng 0, điều đó ám chỉ sự liên tục không gian rất cao ở khoảng cách ngắn.", correct: true },
+                    { id: "tf4", q: "Ordinary Kriging giả định rằng giá trị trung bình của trường ngẫu nhiên là hằng số nhưng chưa biết.", correct: true }
+                ],
+                dragDrop: {
+                    words: ["Sill", "Lag", "Kriging", "Range", "Nugget"],
+                    sentences: [
+                        { id: "dd1", text: "Khoảng cách mà tại đó Variogram đạt đến giá trị ổn định được gọi là [].", answer: "Range" },
+                        { id: "dd2", text: "Giá trị phương sai tổng cộng mà Variogram tiệm cận được gọi là [].", answer: "Sill" },
+                        { id: "dd3", text: "Thuật toán ước lượng nội suy tối ưu nhất trong địa thống kê là [].", answer: "Kriging" },
+                        { id: "dd4", text: "Độ lệch tại gốc tọa độ (h=0) do sai số đo đạc hoặc biến đổi vi mô gọi là hiệu ứng [].", answer: "Nugget" },
+                        { id: "dd5", text: "Vector khoảng cách giữa hai điểm dữ liệu trong tính toán Variogram được gọi là [].", answer: "Lag" }
+                    ]
+                },
+                shortAns: [
+                    { id: "sa1", q: "Hãy định nghĩa ngắn gọn về 'Stationarity' (Tính dừng) trong địa thống kê." },
+                    { id: "sa2", q: "Sự khác biệt cơ bản giữa Simple Kriging và Ordinary Kriging là gì?" },
+                    { id: "sa3", q: "Tại sao cần phải thực hiện biến đổi dữ liệu (ví dụ: Log-normal) trước khi phân tích địa thống kê?" },
+                    { id: "sa4", q: "Hiệu ứng màn chắn (Screen Effect) trong Kriging có ý nghĩa gì?" },
+                    { id: "sa5", q: "Nêu một ứng dụng thực tế của Co-Kriging trong ngành dầu khí." }
                 ]
             },
-            shortAns: [
-                { id: "sa1", q: "Hãy định nghĩa ngắn gọn về 'Stationarity' (Tính dừng) trong địa thống kê." },
-                { id: "sa2", q: "Sự khác biệt cơ bản giữa Simple Kriging và Ordinary Kriging là gì?" },
-                { id: "sa3", q: "Tại sao cần phải thực hiện biến đổi dữ liệu (ví dụ: Log-normal) trước khi phân tích địa thống kê?" },
-                { id: "sa4", q: "Hiệu ứng màn chắn (Screen Effect) trong Kriging có ý nghĩa gì?" },
-                { id: "sa5", q: "Nêu một ứng dụng thực tế của Co-Kriging trong ngành dầu khí." }
-            ]
+            "test2": {
+                mcq: [
+                    { id: "mc1", q: "Thuật ngữ 'Biến vùng' (Regionalized Variable) dùng để chỉ loại biến nào?", options: ["Biến độc lập hoàn toàn", "Biến ngẫu nhiên có cấu trúc không gian", "Biến hằng số trong toàn vùng", "Biến chỉ phụ thuộc thời gian"], correct: 1 },
+                    { id: "mc2", q: "Trong phương pháp Ordinary Kriging (OK), tổng các trọng số lambda phải bằng bao nhiêu?", options: ["0", "1", "Vô cùng", "Tùy thuộc vào số lượng mẫu"], correct: 1 },
+                    { id: "mc3", q: "Mô hình Variogram nào sau đây có tính liên tục cao nhất (trơn nhất) tại gốc tọa độ?", options: ["Mô hình Cầu (Spherical)", "Mô hình Mũ (Exponential)", "Mô hình Gaussian", "Mô hình Nugget thuần túy"], correct: 2 },
+                    { id: "mc4", q: "Hiện tượng 'Dị hướng hình học' (Geometric Anisotropy) xảy ra khi nào?", options: ["Sill thay đổi theo hướng", "Range thay đổi theo hướng nhưng Sill không đổi", "Nugget thay đổi theo hướng", "Cả Sill và Range đều không đổi"], correct: 1 },
+                    { id: "mc5", q: "Phương sai Kriging (Kriging Variance) phụ thuộc vào yếu tố nào?", options: ["Giá trị thực của các mẫu dữ liệu (z-values)", "Cấu hình không gian của mẫu và mô hình Variogram", "Đơn vị đo lường của dữ liệu", "Người thực hiện tính toán"], correct: 1 },
+                    { id: "mc6", q: "Mô phỏng ngẫu nhiên (Stochastic Simulation) khác với Ước lượng (Estimation) ở điểm chính nào?", options: ["Tạo ra bề mặt trơn nhẵn hơn", "Tái tạo được độ biến thiên thực tế và kết cấu dữ liệu", "Luôn có sai số nhỏ hơn", "Chỉ dùng cho dữ liệu 2D"], correct: 1 },
+                    { id: "mc7", q: "Nếu đồ thị Variogram thực nghiệm đi ngang và không bao giờ đạt Sill, xu hướng dữ liệu là gì?", options: ["Dữ liệu dừng (Stationary)", "Dữ liệu có xu hướng (Trend/Drift)", "Dữ liệu bị lỗi", "Dữ liệu tuần hoàn"], correct: 1 },
+                    { id: "mc8", q: "Trong Sequential Gaussian Simulation (SGS), bước đầu tiên quan trọng là gì?", options: ["Tính toán Variogram ngay lập tức", "Biến đổi dữ liệu gốc về phân phối chuẩn (Normal Score Transform)", "Loại bỏ các giá trị ngoại lai", "Chia lưới ô vuông"], correct: 1 },
+                    { id: "mc9", q: "Giả thuyết nội tại (Intrinsic Hypothesis) yếu hơn tính dừng bậc hai vì nó chỉ yêu cầu điều gì?", options: ["Kỳ vọng và Variogram tồn tại và chỉ phụ thuộc khoảng cách h", "Hiệp phương sai tồn tại hữu hạn", "Phân phối xác suất phải là chuẩn", "Không có sai số Nugget"], correct: 0 },
+                    { id: "mc10", q: "Trọng số Kriging (Kriging Weights) có thể nhận giá trị âm không?", options: ["Không bao giờ", "Luôn luôn dương", "Có thể âm (trong một số trường hợp cấu hình mẫu và mô hình)", "Chỉ âm khi dùng Simple Kriging"], correct: 2 },
+                    { id: "mc11", q: "Phạm vi ảnh hưởng (Zone of Influence) của một mẫu trong Kriging phụ thuộc chủ yếu vào tham số nào?", options: ["Sill", "Nugget", "Range", "Mean"], correct: 2 },
+                    { id: "mc12", q: "Khi thực hiện Cross-Validation, biểu đồ Scatterplot giữa 'Giá trị thực' và 'Giá trị ước lượng' lý tưởng nên có dạng gì?", options: ["Đường thẳng y = x (góc 45 độ)", "Đường nằm ngang", "Đám mây điểm tròn không tương quan", "Đường cong Parabol"], correct: 0 }
+                ],
+                tf: [
+                    { id: "tf1", q: "Phương pháp Inverse Distance Weighting (IDW) có tính đến cấu trúc không gian của dữ liệu thông qua Variogram.", correct: false },
+                    { id: "tf2", q: "Hiệu ứng Nugget thuần túy (Pure Nugget Effect) ám chỉ rằng các mẫu dữ liệu hoàn toàn độc lập và không có tương quan không gian.", correct: true },
+                    { id: "tf3", q: "Trong Cokriging, biến phụ (secondary variable) phải được lấy mẫu tại cùng vị trí với biến chính trong mọi trường hợp.", correct: false },
+                    { id: "tf4", q: "Mô hình Variogram hợp lệ phải là một hàm xác định dương (Positive Definite) để đảm bảo phương sai ước lượng không âm.", correct: true }
+                ],
+                dragDrop: {
+                    words: ["Isotropy", "Realization", "Drift", "Stochastic", "Deterministic"],
+                    sentences: [
+                        { id: "dd1", text: "Tính chất mà sự biến thiên không gian giống nhau theo mọi hướng được gọi là [].", answer: "Isotropy" },
+                        { id: "dd2", text: "Một kết quả cụ thể sinh ra từ quá trình mô phỏng ngẫu nhiên được gọi là một [].", answer: "Realization" },
+                        { id: "dd3", text: "Thành phần xu hướng biến đổi có quy luật trong dữ liệu (không ngẫu nhiên) gọi là [].", answer: "Drift" },
+                        { id: "dd4", text: "Mô hình địa thống kê có chứa yếu tố ngẫu nhiên và xác suất được gọi là mô hình [].", answer: "Stochastic" },
+                        { id: "dd5", text: "Mô hình mà kết quả đầu ra được xác định hoàn toàn bởi điều kiện đầu vào (không có ngẫu nhiên) là mô hình [].", answer: "Deterministic" }
+                    ]
+                },
+                shortAns: [
+                    { id: "sa1", q: "Tại sao trong thực tế ta phải mô hình hóa Variogram bằng các hàm toán học thay vì dùng trực tiếp Variogram thực nghiệm?" },
+                    { id: "sa2", q: "Giải thích ngắn gọn ý nghĩa của 'Lag Distance' trong tính toán Variogram." },
+                    { id: "sa3", q: "Nêu tên 3 mô hình Variogram lý thuyết cơ bản thường dùng nhất." },
+                    { id: "sa4", q: "Điều kiện không chệch (Unbiasedness) trong Ordinary Kriging được thể hiện qua phương trình ràng buộc nào?" },
+                    { id: "sa5", q: "Dị hướng vùng (Zonal Anisotropy) khác dị hướng hình học (Geometric Anisotropy) ở tham số nào của Variogram?" }
+                ]
+            },
+            "test3": {
+                mcq: [
+                    { id: "mc1", q: "Trong phân tích Variogram, 'Lag Tolerance' dùng để làm gì?", options: ["Quy định sai số cho phép về khoảng cách khi tìm cặp điểm", "Loại bỏ các giá trị ngoại lai", "Thay đổi kích thước mẫu", "Tính toán phương sai"], correct: 0 },
+                    { id: "mc2", q: "Mô hình Variogram 'Gaussian' có đặc điểm gì nổi bật gần gốc tọa độ?", options: ["Tiếp tuyến thẳng đứng", "Tiếp tuyến nằm ngang (parabolic behavior)", "Gián đoạn (Nugget)", "Tăng tuyến tính"], correct: 1 },
+                    { id: "mc3", q: "Kriging khối (Block Kriging) khác Kriging điểm (Point Kriging) như thế nào?", options: ["Ước lượng giá trị trung bình cho một thể tích thay vì một điểm", "Chỉ dùng cho dữ liệu 3D", "Không tính được phương sai sai số", "Nhanh hơn Kriging điểm"], correct: 0 },
+                    { id: "mc4", q: "Khi nào nên sử dụng Indicator Kriging?", options: ["Khi dữ liệu tuân theo phân phối chuẩn", "Khi muốn ước lượng xác suất vượt quá một ngưỡng (cutoff) hoặc phân loại tướng đá", "Khi dữ liệu rất trơn", "Khi không có dữ liệu thứ cấp"], correct: 1 },
+                    { id: "mc5", q: "Quy trình 'Normal Score Transform' có tác dụng gì?", options: ["Biến đổi dữ liệu bất kỳ về phân phối chuẩn (Gaussian)", "Loại bỏ xu hướng", "Tính toán Variogram", "Vẽ bản đồ"], correct: 0 },
+                    { id: "mc6", q: "Nếu Variogram không đạt Sill (không chặn), điều này ám chỉ gì?", options: ["Dữ liệu có xu hướng (Trend) rõ rệt", "Dữ liệu bị lỗi", "Khoảng cách mẫu quá nhỏ", "Không thể nội suy"], correct: 0 },
+                    { id: "mc7", q: "Jackknife là kỹ thuật gì trong địa thống kê?", options: ["Một loại búa địa chất", "Kỹ thuật kiểm chứng lại (Resampling) để đánh giá sai số ước lượng", "Phương pháp khoan", "Phần mềm mô phỏng"], correct: 1 },
+                    { id: "mc8", q: "Trong Co-Kriging, biến thứ cấp (Secondary Variable) thường có đặc điểm gì?", options: ["Được lấy mẫu thưa hơn biến chính", "Được lấy mẫu dày đặc hơn và có tương quan với biến chính", "Không liên quan đến biến chính", "Luôn là dữ liệu địa chấn"], correct: 1 },
+                    { id: "mc9", q: "Sequential Gaussian Simulation (SGS) dựa trên giả định nào?", options: ["Dữ liệu đa biến tuân theo phân phối chuẩn đa biến", "Dữ liệu là log-normal", "Không cần giả định phân phối", "Biến ngẫu nhiên độc lập"], correct: 0 },
+                    { id: "mc10", q: "Ergodicity (Tính Ergodic) cho phép ta làm gì?", options: ["Thay thế trung bình không gian bằng trung bình xác suất (ensemble average)", "Bỏ qua các giá trị ngoại lai", "Không cần Variogram", "Dùng IDW thay cho Kriging"], correct: 0 },
+                    { id: "mc11", q: "Biểu đồ Q-Q plot dùng để so sánh:", options: ["Hai giá trị tại hai điểm", "Hai phân phối xác suất (ví dụ: mẫu và mô hình)", "Tọa độ X và Y", "Phương sai và Trung bình"], correct: 1 },
+                    { id: "mc12", q: "Hiệu ứng lỗ (Hole Effect) trên Variogram thường chỉ ra điều gì?", options: ["Sự tuần hoàn hoặc lặp lại của cấu trúc địa chất", "Nhiễu dữ liệu", "Thiếu mẫu", "Dị hướng hình học"], correct: 0 }
+                ],
+                tf: [
+                    { id: "tf1", q: "Kriging có xu hướng làm trơn (smooth) bản đồ ước lượng so với thực tế, làm mất đi các giá trị cực trị.", correct: true },
+                    { id: "tf2", q: "Mô phỏng (Simulation) tạo ra duy nhất một kết quả bản đồ tốt nhất.", correct: false },
+                    { id: "tf3", q: "Variogram thực nghiệm luôn luôn là một hàm liên tục trơn tru.", correct: false },
+                    { id: "tf4", q: "Search Neighborhood (Vùng tìm kiếm) hình elip được dùng để xử lý tính dị hướng của dữ liệu.", correct: true }
+                ],
+                dragDrop: {
+                    words: ["Histogram", "Scatterplot", "Trend", "Residual", "Outlier"],
+                    sentences: [
+                        { id: "dd1", text: "Biểu đồ thể hiện tần suất xuất hiện của các giá trị dữ liệu được gọi là [].", answer: "Histogram" },
+                        { id: "dd2", text: "Thành phần biến đổi quy mô lớn, có quy luật trong không gian được gọi là [].", answer: "Trend" },
+                        { id: "dd3", text: "Giá trị sai khác giữa dữ liệu thực tế và thành phần xu hướng được gọi là [].", answer: "Residual" },
+                        { id: "dd4", text: "Biểu đồ dùng để đánh giá mối tương quan giữa hai biến được gọi là [].", answer: "Scatterplot" },
+                        { id: "dd5", text: "Một giá trị dị biệt, khác xa so với phần còn lại của tập dữ liệu được gọi là [].", answer: "Outlier" }
+                    ]
+                },
+                shortAns: [
+                    { id: "sa1", q: "Tại sao mô phỏng (Simulation) lại được ưa chuộng hơn Kriging khi đánh giá độ bất định của hồ chứa?" },
+                    { id: "sa2", q: "Lag Tolerance (dung sai khoảng cách) ảnh hưởng thế nào đến việc tính toán Variogram thực nghiệm?" },
+                    { id: "sa3", q: "Khái niệm 'Support Effect' (Hiệu ứng gối tựa) có ý nghĩa gì khi chuyển từ mẫu lõi khoan sang quy mô block lưới?" },
+                    { id: "sa4", q: "Nêu sự khác biệt chính giữa mô hình cầu (Spherical) và mô hình mũ (Exponential) về mặt tiếp cận Sill." },
+                    { id: "sa5", q: "Collocated Cokriging khác Cokriging đầy đủ (Full Cokriging) ở điểm nào?" }
+                ]
+            },
+            "test4": {
+                mcq: [
+                    { id: "mc1", q: "Mục đích chính của kỹ thuật 'Declustering' (Gom cụm) trong địa thống kê là gì?", options: ["Loại bỏ các giá trị ngoại lai", "Giảm ảnh hưởng của việc lấy mẫu ưu tiên tại các khu vực có giá trị cao/thấp", "Tăng số lượng mẫu", "Biến đổi dữ liệu về chuẩn"], correct: 1 },
+                    { id: "mc2", q: "Hệ số biến thiên (Coefficient of Variation - CV) được tính bằng công thức nào?", options: ["Độ lệch chuẩn chia cho Trung bình", "Trung bình chia cho Độ lệch chuẩn", "Phương sai chia cho Trung bình", "Trung bình trừ đi Mode"], correct: 0 },
+                    { id: "mc3", q: "Trong phân tích xu hướng (Trend Analysis), nếu tồn tại 'Drift', ta thường phải làm gì trước khi tính Variogram?", options: ["Bỏ qua xu hướng", "Tách thành phần xu hướng ra để làm việc với phần dư (Residuals)", "Dùng Simple Kriging ngay lập tức", "Chuyển sang dùng IDW"], correct: 1 },
+                    { id: "mc4", q: "Kỹ thuật 'Moving Window' (Cửa sổ di chuyển) thường được dùng để đánh giá tính chất nào của dữ liệu?", options: ["Tính dừng (Stationarity) cục bộ", "Tính dị hướng toàn cục", "Độ chính xác của thiết bị đo", "Sai số Nugget"], correct: 0 },
+                    { id: "mc5", q: "Phương pháp 'Polygon of Influence' (Đa giác Voronoi) gán giá trị ước lượng cho một vùng dựa trên:", options: ["Trung bình cộng của tất cả các mẫu", "Giá trị của điểm mẫu gần nhất duy nhất", "Tổ hợp tuyến tính của 3 điểm gần nhất", "Hàm nghịch đảo khoảng cách"], correct: 1 },
+                    { id: "mc6", q: "Trong phương trình Kriging, biến 'Lagrange Multiplier' được đưa vào để làm gì?", options: ["Giảm thiểu phương sai sai số", "Đảm bảo điều kiện không chệch (tổng trọng số bằng 1)", "Tăng độ trơn của bản đồ", "Xử lý hiệu ứng Nugget"], correct: 1 },
+                    { id: "mc7", q: "Sự khác biệt chính giữa 'Hard Data' và 'Soft Data' là gì?", options: ["Hard Data là dữ liệu số, Soft Data là dữ liệu chữ", "Hard Data là dữ liệu đo đạc trực tiếp chính xác, Soft Data là dữ liệu gián tiếp có độ bất định", "Hard Data dùng cho cát, Soft Data dùng cho sét", "Không có sự khác biệt"], correct: 1 },
+                    { id: "mc8", q: "Universal Kriging (Kriging với xu hướng) thường được sử dụng khi:", options: ["Dữ liệu có giá trị trung bình không đổi", "Dữ liệu có xu hướng biến đổi (Non-stationary mean) rõ rệt trong không gian", "Dữ liệu rất ít", "Dữ liệu tuân theo phân phối chuẩn"], correct: 1 },
+                    { id: "mc9", q: "Biểu đồ Scatterplot giữa hai biến có hệ số tương quan r = 0 nghĩa là gì?", options: ["Hai biến có quan hệ tuyến tính hoàn hảo", "Hai biến hoàn toàn không có quan hệ tuyến tính", "Hai biến có quan hệ nghịch biến", "Dữ liệu bị sai"], correct: 1 },
+                    { id: "mc10", q: "Trong mô phỏng (Simulation), khái niệm 'Equiprobable Realizations' nghĩa là gì?", options: ["Các kết quả mô phỏng đều có xác suất xảy ra như nhau", "Chỉ có một kết quả đúng duy nhất", "Kết quả mô phỏng phải giống hệt Kriging", "Các kết quả không đáng tin cậy"], correct: 0 },
+                    { id: "mc11", q: "Để kiểm tra tính đa Gaussian (Multi-Gaussianity) của dữ liệu, ta thường dùng kiểm định nào?", options: ["Kiểm định t-test", "Kiểm tra tính tuyến tính của h-scatterplots trên dữ liệu đã biến đổi Normal Score", "Kiểm định Chi-square", "So sánh Mean và Median"], correct: 1 },
+                    { id: "mc12", q: "Khi bán kính tìm kiếm (Search Radius) quá nhỏ, điều gì sẽ xảy ra với kết quả Kriging?", options: ["Bản đồ sẽ rất trơn", "Sẽ có nhiều điểm không ước lượng được (bị bỏ trống)", "Phương sai Kriging sẽ rất thấp", "Thời gian tính toán tăng lên"], correct: 1 }
+                ],
+                tf: [
+                    { id: "tf1", q: "Gom cụm (Declustering) làm thay đổi giá trị của các mẫu dữ liệu gốc.", correct: false },
+                    { id: "tf2", q: "Phương sai Kriging (Kriging Variance) không phụ thuộc vào giá trị thực tế của các mẫu dữ liệu, chỉ phụ thuộc vào vị trí của chúng.", correct: true },
+                    { id: "tf3", q: "Trong Kriging, các điểm dữ liệu nằm trong vùng bị che khuất (screened) bởi các điểm dữ liệu khác gần hơn sẽ nhận trọng số nhỏ hoặc âm.", correct: true },
+                    { id: "tf4", q: "Variogram thực nghiệm luôn luôn đơn điệu tăng.", correct: false }
+                ],
+                dragDrop: {
+                    words: ["Declustering", "Residual", "Drift", "Hard Data", "Soft Data"],
+                    sentences: [
+                        { id: "dd1", text: "Quá trình gán trọng số cho các mẫu để điều chỉnh lại phân phối xác suất mẫu cho đại diện hơn gọi là [].", answer: "Declustering" },
+                        { id: "dd2", text: "Dữ liệu đo đạc trực tiếp tại giếng khoan với độ chính xác cao được gọi là [].", answer: "Hard Data" },
+                        { id: "dd3", text: "Thành phần biến thiên tất định, quy mô lớn trong dữ liệu được gọi là Xu hướng hay [].", answer: "Drift" },
+                        { id: "dd4", text: "Dữ liệu địa chấn hoặc thông tin địa chất định tính hỗ trợ cho quá trình ước lượng gọi là [].", answer: "Soft Data" },
+                        { id: "dd5", text: "Phần còn lại sau khi lấy dữ liệu gốc trừ đi thành phần xu hướng được gọi là [].", answer: "Residual" }
+                    ]
+                },
+                shortAns: [
+                    { id: "sa1", q: "Tại sao khi tính Variogram ta cần phải xác định phương hướng (Directional Variogram) thay vì chỉ dùng Omni-directional?" },
+                    { id: "sa2", q: "Giải thích ngắn gọn ý nghĩa của 'Search Ellipsoid' (Elip tìm kiếm) trong quá trình ước lượng." },
+                    { id: "sa3", q: "Trong phương pháp Cell-Declustering, kích thước cell ảnh hưởng như thế nào đến kết quả trung bình?" },
+                    { id: "sa4", q: "Tại sao phương sai Kriging thường bằng 0 tại vị trí điểm mẫu?" },
+                    { id: "sa5", q: "Nêu một ưu điểm của Simulation so với Kriging khi dùng làm đầu vào cho mô phỏng dòng chảy (Flow Simulation)." }
+                ]
+            },
+            "test5": {
+                mcq: [
+                    { id: "mc1", q: "Thuật toán 'Sequential Indicator Simulation' (SIS) thường được dùng để mô phỏng loại biến nào?", options: ["Biến liên tục (Độ rỗng, Độ thấm)", "Biến phân loại (Tướng đá, Loại thạch học)", "Biến vector", "Nhiệt độ hồ chứa"], correct: 1 },
+                    { id: "mc2", q: "Trong đánh giá rủi ro (Risk Assessment), giá trị P90 thường ám chỉ điều gì (trong ngữ cảnh trữ lượng dầu khí)?", options: ["Giá trị lạc quan, có 90% khả năng đạt được hoặc vượt qua", "Giá trị bi quan, chỉ có 10% khả năng đạt được", "Giá trị trung bình", "Giá trị cực đại"], correct: 0 },
+                    { id: "mc3", q: "Quá trình 'Upscaling' (Nâng quy mô) là quá trình chuyển đổi mô hình từ:", options: ["Mô hình địa chất chi tiết (Fine grid) sang mô hình dòng chảy thô hơn (Coarse grid)", "Mô hình thô sang mô hình chi tiết", "Mô hình 2D sang 3D", "Mô hình tĩnh sang mô hình động đất"], correct: 0 },
+                    { id: "mc4", q: "Tại sao các 'Realization' (Kết quả mô phỏng) thường có vẻ 'nhiễu' (noisy) hơn bản đồ Kriging?", options: ["Do sai số tính toán", "Do Simulation tái tạo lại toàn bộ độ biến thiên (variance) của dữ liệu, bao gồm cả thành phần ngẫu nhiên", "Do dữ liệu đầu vào kém chất lượng", "Do lỗi phần mềm"], correct: 1 },
+                    { id: "mc5", q: "Hệ số tương quan (Correlation Coefficient) giữa dữ liệu địa chấn (Seismic) và độ rỗng càng cao thì:", options: ["Hiệu quả của Co-Kriging hoặc Co-Simulation càng thấp", "Hiệu quả của Co-Kriging hoặc Co-Simulation càng cao", "Không ảnh hưởng gì", "Nên bỏ qua dữ liệu địa chấn"], correct: 1 },
+                    { id: "mc6", q: "Trong mô hình Variogram 3D, các góc quay (Azimuth, Dip, Rake) dùng để xác định:", options: ["Hướng của các trục chính dị hướng", "Vị trí của gốc tọa độ", "Kích thước của lưới mô phỏng", "Độ lớn của Sill"], correct: 0 },
+                    { id: "mc7", q: "Khái niệm 'Net-to-Gross' (N/G) trong mô hình hồ chứa nghĩa là gì?", options: ["Tỷ lệ thể tích đá chứa dầu (Reservoir rock) trên tổng thể tích đá", "Tỷ lệ dầu trên nước", "Tỷ lệ lợi nhuận ròng", "Tỷ lệ rỗng trên thấm"], correct: 0 },
+                    { id: "mc8", q: "Phương pháp Monte Carlo được dùng trong địa thống kê để:", options: ["Giải các phương trình vi phân", "Lấy mẫu ngẫu nhiên từ các phân phối xác suất để đánh giá độ bất định", "Vẽ bản đồ contour", "Tính toán Variogram"], correct: 1 },
+                    { id: "mc9", q: "Mục đích chính của việc xây dựng mô hình địa chất 3D là gì?", options: ["Để in ra bản đồ đẹp hơn", "Để nắm bắt sự không đồng nhất (Heterogeneity) của vỉa chứa trong không gian 3 chiều", "Để giảm khối lượng tính toán", "Để thay thế kỹ sư địa chất"], correct: 1 },
+                    { id: "mc10", q: "Sự khác biệt giữa mô hình 'Stochastic' và 'Deterministic' là:", options: ["Stochastic luôn cho 1 kết quả duy nhất, Deterministic cho nhiều kết quả", "Stochastic tích hợp yếu tố ngẫu nhiên và cho nhiều kết quả khả dĩ, Deterministic cho 1 kết quả duy nhất dựa trên đầu vào", "Không có sự khác biệt", "Deterministic tốt hơn cho đánh giá rủi ro"], correct: 1 },
+                    { id: "mc11", q: "Khi thực hiện mô phỏng tướng đá (Facies Modeling), tại sao thường làm trước khi mô phỏng độ rỗng/độ thấm?", options: ["Vì tướng đá quyết định sự phân bố không gian của các thuộc tính vật lý đá", "Vì tướng đá dễ làm hơn", "Vì phần mềm bắt buộc", "Không cần thiết, làm cái nào trước cũng được"], correct: 0 },
+                    { id: "mc12", q: "E-type estimate (Estimation type) được tính bằng cách nào từ các Realization?", options: ["Lấy giá trị lớn nhất tại mỗi điểm", "Lấy giá trị nhỏ nhất", "Tính trung bình cộng của tất cả các Realization tại mỗi điểm lưới", "Chọn ngẫu nhiên một Realization"], correct: 2 }
+                ],
+                tf: [
+                    { id: "tf1", q: "Quá trình Upscaling luôn bảo toàn chính xác 100% phương sai của dữ liệu gốc.", correct: false },
+                    { id: "tf2", q: "SIS (Sequential Indicator Simulation) không thể dùng để mô phỏng các biến liên tục như độ rỗng.", correct: true },
+                    { id: "tf3", q: "Bản đồ Kriging có xu hướng làm 'mịn' (smooth) các đặc điểm địa chất cực đoan so với thực tế.", correct: true },
+                    { id: "tf4", q: "Mục tiêu của History Matching là điều chỉnh mô hình địa chất sao cho khớp với dữ liệu sản xuất thực tế.", correct: true }
+                ],
+                dragDrop: {
+                    words: ["Upscaling", "Uncertainty", "Heterogeneity", "Realization", "E-type"],
+                    sentences: [
+                        { id: "dd1", text: "Quá trình chuyển đổi đặc tính từ quy mô nhỏ sang quy mô lớn hơn được gọi là [].", answer: "Upscaling" },
+                        { id: "dd2", text: "Sự thiếu hiểu biết hoặc không chắc chắn về giá trị thực của thông số tại vị trí chưa lấy mẫu gọi là [].", answer: "Uncertainty" },
+                        { id: "dd3", text: "Sự biến đổi phức tạp của tính chất đá trong không gian vỉa chứa được gọi là tính không đồng nhất hay [].", answer: "Heterogeneity" },
+                        { id: "dd4", text: "Một kết quả cụ thể, khả dĩ của quá trình mô phỏng ngẫu nhiên được gọi là một [].", answer: "Realization" },
+                        { id: "dd5", text: "Bản đồ trung bình cộng của hàng trăm kết quả mô phỏng (Realization) được gọi là bản đồ [].", answer: "E-type" }
+                    ]
+                },
+                shortAns: [
+                    { id: "sa1", q: "Tại sao trong quy trình mô hình hóa, ta thường mô phỏng Tướng đá (Facies) trước khi mô phỏng Độ rỗng/Độ thấm?" },
+                    { id: "sa2", q: "Nêu ý nghĩa của phân vị P50 trong đánh giá trữ lượng." },
+                    { id: "sa3", q: "Tại sao Upscaling lại cần thiết khi chuyển từ mô hình địa chất sang mô hình mô phỏng dòng chảy?" },
+                    { id: "sa4", q: "Sự khác biệt cơ bản nhất về mục đích sử dụng giữa SGS (Sequential Gaussian Simulation) và SIS (Sequential Indicator Simulation) là gì?" },
+                    { id: "sa5", q: "Làm thế nào để kiểm chứng (validate) một mô hình mô phỏng ngẫu nhiên có tốt hay không?" }
+                ]
+            }
         };
+
+        let currentQuizData = allTests["test1"]; // Default
 
         // --- RENDER FUNCTIONS ---
         
+        function changeTest() {
+            const testId = document.getElementById('testSelect').value;
+            currentQuizData = allTests[testId];
+            
+            // Clear old contents
+            document.getElementById('mcqContainer').innerHTML = '';
+            document.getElementById('tfContainer').innerHTML = '';
+            document.getElementById('wordBank').innerHTML = '';
+            document.getElementById('dragDropContainer').innerHTML = '';
+            document.getElementById('shortAnswerContainer').innerHTML = '';
+
+            // Reset dragged items var
+            draggedItem = null;
+
+            // Re-render
+            initQuiz();
+        }
+
         function initQuiz() {
             renderMCQ();
             renderTF();
             renderDragDrop();
             renderShortAnswer();
-            startTimer();
+            // Timer is global, no need to restart unless full reset
         }
 
         function renderMCQ() {
             const container = document.getElementById('mcqContainer');
-            quizData.mcq.forEach((item, index) => {
+            currentQuizData.mcq.forEach((item, index) => {
                 const div = document.createElement('div');
                 div.className = "bg-white p-5 rounded-lg shadow-sm border border-gray-100 hover:shadow-md transition";
                 div.innerHTML = `
@@ -264,7 +452,7 @@
 
         function renderTF() {
             const container = document.getElementById('tfContainer');
-            quizData.tf.forEach((item, index) => {
+            currentQuizData.tf.forEach((item, index) => {
                 const div = document.createElement('div');
                 div.className = "bg-white p-5 rounded-lg shadow-sm border border-gray-100";
                 div.innerHTML = `
@@ -285,10 +473,8 @@
         }
 
         function renderDragDrop() {
-            // Render Word Bank
             const wordBank = document.getElementById('wordBank');
-            // Shuffle words
-            const shuffledWords = [...quizData.dragDrop.words].sort(() => Math.random() - 0.5);
+            const shuffledWords = [...currentQuizData.dragDrop.words].sort(() => Math.random() - 0.5);
             
             shuffledWords.forEach(word => {
                 const el = document.createElement('div');
@@ -297,11 +483,8 @@
                 el.innerText = word;
                 el.id = 'word-' + word;
                 
-                // Desktop Drag Events
                 el.addEventListener('dragstart', dragStart);
                 el.addEventListener('dragend', dragEnd);
-                
-                // Mobile Touch Events
                 el.addEventListener('touchstart', touchStart, {passive: false});
                 el.addEventListener('touchmove', touchMove, {passive: false});
                 el.addEventListener('touchend', touchEnd);
@@ -309,18 +492,15 @@
                 wordBank.appendChild(el);
             });
 
-            // Render Sentences
             const container = document.getElementById('dragDropContainer');
-            quizData.dragDrop.sentences.forEach((item, index) => {
+            currentQuizData.dragDrop.sentences.forEach((item, index) => {
                 const div = document.createElement('div');
                 div.className = "p-3 border-b border-gray-100 last:border-0";
-                // Replace [] with dropzone
                 const htmlText = item.text.replace('[]', `<span class="drop-zone" data-correct="${item.answer}" id="drop-${item.id}"></span>`);
                 div.innerHTML = `<span class="font-bold text-purple-600 mr-2">Câu ${index + 1}:</span> ${htmlText}`;
                 container.appendChild(div);
             });
 
-            // Add Drop Events to Zones
             document.querySelectorAll('.drop-zone').forEach(zone => {
                 zone.addEventListener('dragover', dragOver);
                 zone.addEventListener('dragenter', dragEnter);
@@ -331,7 +511,7 @@
 
         function renderShortAnswer() {
             const container = document.getElementById('shortAnswerContainer');
-            quizData.shortAns.forEach((item, index) => {
+            currentQuizData.shortAns.forEach((item, index) => {
                 const div = document.createElement('div');
                 div.className = "bg-white p-5 rounded-lg shadow-sm border border-gray-100";
                 div.innerHTML = `
@@ -363,13 +543,12 @@
         function drop(e) {
             this.classList.remove('over');
             if (draggedItem) {
-                // Nếu zone đã có item, trả item cũ về bank
                 if (this.innerText) {
                     returnToBank(this.innerText);
                 }
                 this.innerText = draggedItem.innerText;
                 this.dataset.val = draggedItem.innerText;
-                draggedItem.style.display = 'none'; // Ẩn khỏi bank
+                draggedItem.style.display = 'none';
             }
         }
 
@@ -402,7 +581,6 @@
             touchItem.style.opacity = 1;
             touchItem.style.zIndex = '';
             
-            // Check drop
             const changedTouch = e.changedTouches[0];
             const elemBelow = document.elementFromPoint(changedTouch.clientX, changedTouch.clientY);
             const dropZone = elemBelow ? elemBelow.closest('.drop-zone') : null;
@@ -414,7 +592,6 @@
                 touchItem.style.display = 'none';
             }
             
-            // Reset style
             touchItem.style.position = '';
             touchItem = null;
         }
@@ -433,6 +610,15 @@
             const name = document.getElementById('studentName').value.trim();
             const mssv = document.getElementById('studentId').value.trim();
             const group = document.getElementById('classId').value;
+            const testId = document.getElementById('testSelect').value;
+            
+            // Cập nhật logic lấy tên đề thi
+            let testName = "Đề thi không xác định";
+            if(testId === 'test1') testName = "Đề số 01";
+            else if(testId === 'test2') testName = "Đề số 02";
+            else if(testId === 'test3') testName = "Đề số 03";
+            else if(testId === 'test4') testName = "Đề số 04";
+            else if(testId === 'test5') testName = "Đề số 05";
             
             if (!name || !mssv) {
                 alert("Vui lòng nhập đầy đủ Họ tên và MSSV!");
@@ -440,17 +626,16 @@
                 return;
             }
 
-            if (!confirm("Bạn có chắc chắn muốn nộp bài? Không thể sửa đổi sau khi nộp.")) return;
+            if (!confirm(`Bạn đang nộp bài ${testName}. Bạn có chắc chắn?`)) return;
 
             document.getElementById('loadingOverlay').style.display = 'flex';
 
             // Calculate Score
             let score = 0;
-            let totalScoreMax = 10; // Giả sử thang điểm 10
-            let results = []; // Mảng chứa kết quả chi tiết từng câu để gửi đi
+            let results = [`[${testName}]`]; 
 
-            // 1. MCQ (0.25đ/câu x 12 = 3đ)
-            quizData.mcq.forEach(q => {
+            // 1. MCQ 
+            currentQuizData.mcq.forEach(q => {
                 const selected = document.querySelector(`input[name="${q.id}"]:checked`);
                 const val = selected ? parseInt(selected.value) : -1;
                 const isCorrect = val === q.correct;
@@ -458,8 +643,8 @@
                 results.push(isCorrect ? "Đ" : "S"); 
             });
 
-            // 2. TF (0.25đ/câu x 4 = 1đ)
-            quizData.tf.forEach(q => {
+            // 2. TF 
+            currentQuizData.tf.forEach(q => {
                 const selected = document.querySelector(`input[name="${q.id}"]:checked`);
                 const val = selected ? (selected.value === 'true') : null;
                 const isCorrect = val === q.correct;
@@ -467,7 +652,7 @@
                 results.push(isCorrect ? "Đ" : "S");
             });
 
-            // 3. DragDrop (0.4đ/câu x 5 = 2đ)
+            // 3. DragDrop 
             document.querySelectorAll('.drop-zone').forEach(zone => {
                 const userVal = zone.innerText.trim();
                 const correctVal = zone.dataset.correct;
@@ -476,32 +661,21 @@
                 results.push(isCorrect ? "Đ" : "S");
             });
 
-            // 4. Short Answer (Chấm tay sau - Gửi nội dung)
-            // Ghi nhận nội dung trả lời vào mảng kết quả
-            quizData.shortAns.forEach(q => {
+            // 4. Short Answer 
+            currentQuizData.shortAns.forEach(q => {
                 const val = document.getElementById(q.id).value.trim();
-                results.push(val ? `"${val}"` : "Trống"); // Gửi nội dung text đi
+                results.push(val ? `"${val}"` : "Trống"); 
             });
 
-            // Format dữ liệu gửi đi khớp với App Script
-            // Script nhận: [Date, role, evaluator, groupName, week, ...scores]
-            // Map vào:
-            // role -> "Bài Kiểm Tra"
-            // evaluator -> Tên SV - MSSV
-            // groupName -> Lớp
-            // week -> "Điểm: " + score
-            // scores -> Mảng chi tiết [Đ, S, Đ, "Nội dung trả lời"...]
-            
             const payload = {
                 role: "Bài Kiểm Tra GK",
                 evaluator: `${name} - ${mssv}`,
                 groupName: group,
-                week: `Điểm TN: ${score.toFixed(2)}`,
+                week: `[${testName}] Điểm TN: ${score.toFixed(2)}`,
                 scores: results
             };
 
             try {
-                // Sử dụng no-cors để tránh lỗi CORS khi gọi trực tiếp từ browser client
                 await fetch(GOOGLE_SCRIPT_URL, {
                     method: 'POST',
                     mode: 'no-cors', 
@@ -509,11 +683,9 @@
                     body: JSON.stringify(payload)
                 });
 
-                // Vì no-cors không trả về response body, ta giả định thành công nếu không có lỗi mạng
                 document.getElementById('loadingOverlay').style.display = 'none';
-                alert(`Nộp bài thành công!\nĐiểm trắc nghiệm tạm tính: ${score.toFixed(2)}`);
-                // Khóa form
-                document.querySelectorAll('input, button, textarea, .draggable-item').forEach(el => el.disabled = true);
+                alert(`Nộp bài thành công!\nĐề thi: ${testName}\nĐiểm trắc nghiệm tạm tính: ${score.toFixed(2)}`);
+                document.querySelectorAll('input, button, textarea, .draggable-item, select').forEach(el => el.disabled = true);
                 
             } catch (error) {
                 document.getElementById('loadingOverlay').style.display = 'none';
@@ -529,6 +701,7 @@
                     if(z.innerText) returnToBank(z.innerText);
                     z.innerText = '';
                 });
+                changeTest(); // Re-render to clear radio buttons properly
                 window.scrollTo(0,0);
             }
         }
@@ -549,7 +722,9 @@
         }
 
         // Init
-        window.onload = initQuiz;
+        window.onload = () => {
+            initQuiz();
+        };
 
     </script>
 </body>
